@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Redraft Trade Calculator</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--text:#1b1f24;--muted:#667085;--line:#e2e5ea;--a:#2563eb;--b:#d97706;--ok:#15803d;--warn:#b45309;--bad:#b91c1c;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1318;--card:#181e26;--text:#e8ebf0;--muted:#9aa4b2;--line:#2a323d;--a:#6ea0ff;--b:#f5b04c;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:900px;margin:0 auto;padding:20px 14px 40px}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 18px;font-size:13px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card h2{margin:0 0 10px;font-size:16px}
+#cardA h2{color:var(--a)}#cardB h2{color:var(--b)}
+label{display:block;font-size:12px;color:var(--muted);margin:8px 0 3px}
+select{width:100%;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:14px}
+ul{list-style:none;padding:0;margin:12px 0 0;min-height:30px}
+li{display:flex;justify-content:space-between;align-items:center;padding:7px 9px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;font-size:14px}
+li span.v{color:var(--muted);margin:0 8px 0 auto}
+.tg{color:var(--muted);font-weight:400;font-size:12px}
+li button{border:0;background:none;color:var(--bad);font-size:18px;cursor:pointer;line-height:1}
+.empty{color:var(--muted);font-size:13px;padding:6px 2px}
+.total{margin-top:8px;font-weight:600;display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:8px}
+#go{display:block;width:100%;margin:16px 0;padding:13px;font-size:16px;font-weight:600;border:0;border-radius:10px;background:var(--a);color:#fff;cursor:pointer}
+#go:disabled{opacity:.45;cursor:not-allowed}
+.ac{position:relative}
+.search{width:100%;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:14px}
+.sug{display:none;position:absolute;left:0;right:0;top:100%;z-index:20;margin-top:2px;max-height:250px;overflow-y:auto;background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.2)}
+.sug div{padding:9px 10px;cursor:pointer;display:flex;justify-content:space-between;font-size:14px}
+.sug div.on,.sug div:hover{background:var(--bg)}
+.sug .v{color:var(--muted)}
+.tabs{display:flex;gap:6px;margin-bottom:16px}
+.tabs button{flex:1;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);font-size:14px;font-weight:600;cursor:pointer}
+.tabs button.on{background:var(--a);color:#fff;border-color:var(--a)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.row>*{flex:1;min-width:120px}
+.btn{padding:9px 14px;border:0;border-radius:8px;background:var(--a);color:#fff;cursor:pointer;font-weight:600}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.tr{border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:10px;font-size:14px}
+.trh{display:flex;justify-content:space-between;margin-bottom:4px}
+.muted{color:var(--muted);font-size:12px}
+table{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px}th,td{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}
+.tn{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+textarea{width:100%;min-height:80px;margin-top:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);padding:8px;font-size:12px}
+#result{display:none}
+#result .verdict{font-size:20px;font-weight:700;margin:0 0 6px}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:10px 0;background:var(--line)}
+.bar div{transition:width .4s}
+.fine{font-size:12px;color:var(--muted);margin-top:14px}
+</style>
+</head>
+<body>
+<main>
+<h1>⚾ Redraft Trade Calculator</h1>
+<p class="sub"><a href="tracker.html" >📒 Open the League Trade Tracker</a><br>Player values based on a 2027 overall ranking (NBC Sports, July 2026), adjusted for H2H categories (relievers/holds boosted, positional scarcity, bench depth) + 2027 draft picks (10-team snake draft, 28 rounds). Draft order is random, so each round is valued at its expected slot. Values are editable in the script. Add as many players and picks to each side as you want; use × to remove any.</p>
+<div class="grid">
+  <section class="card" id="cardA"><h2>Team A gives</h2></section>
+  <section class="card" id="cardB"><h2>Team B gives</h2></section>
+</div>
+<details class="card" style="margin-top:14px"><summary style="cursor:pointer">➕ Add a player that isn't on the list</summary>
+<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+<input id="cn" placeholder="Player name" style="flex:2;min-width:140px;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text)">
+<input id="cv" type="number" min="0" max="40" step="0.5" placeholder="Value 0–40" style="flex:1;min-width:90px;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text)">
+<button id="ca" style="padding:9px 14px;border-radius:8px;border:0;background:var(--a);color:#fff;cursor:pointer">Add to list</button></div>
+<div id="cm" class="fine" style="margin-top:8px"></div></details>
+<button id="go" disabled>Evaluate Trade</button>
+<section class="card" id="result">
+  <p class="verdict" id="verdict"></p>
+  <div id="detail"></div><div id="scen"></div>
+  <div class="bar"><div id="barA" style="background:var(--a)"></div><div id="barB" style="background:var(--b)"></div></div>
+</section>
+<p class="fine">Fair = within ~8% of the larger side (or ≤3 pts). Snake draft with randomized order: your slot is unknown (1.01 pairs with 2.10, etc.), so each round's pick is valued at its average. Curve: R1=40, R2=30, R3≈22.5, falling to 0 at R28. The scenario breakdown re-runs the trade across all 90 possible draft-slot combinations (two teams can't share a slot; a team's early and late picks move in opposite directions in a snake).</p>
+</main>
+<script>
+// ---- Editable player values (approx. 2026 ROS redraft; 40 = top-tier star) ----
+const PLAYER_VALUES = {};
+// Overall 2027 redraft rank (hitters, SP, RP together); value = same decay as draft picks: rank 1 = 40, rank 11 = 30, rank 21 = 22.5 ...
+const RANKED = "Bobby Witt Jr.|Aaron Judge|Shohei Ohtani|James Wood|Junior Caminero|Nick Kurtz|Yordan Alvarez|Juan Soto|Ronald Acuna Jr.|Elly De La Cruz|Julio Rodriguez|Tarik Skubal|Vladimir Guerrero Jr.|Jacob Misiorowski|Jackson Chourio|Fernando Tatis Jr.|Cristopher Sanchez|Gunnar Henderson|Jose Ramirez|Corbin Carroll|Kyle Tucker|Pete Alonso|Kyle Schwarber|Pete Crow-Armstrong|CJ Abrams|Cam Schlittler|Zach Neto|Yoshinobu Yamamoto|Paul Skenes|Sal Stewart|Bryce Harper|Brice Turang|Logan Gilbert|Michael Harris II|Ketel Marte|Oneil Cruz|Francisco Lindor|Garrett Crochet|Mason Miller|Matt Olson|Trea Turner|Jordan Walker|Bryan Woo|Zack Wheeler|Freddie Freeman|Chase Burns|Shohei Ohtani (SP)|JJ Wetherholt|Jhoan Duran|Dylan Cease|Roman Anthony|Chris Sale|Cody Bellinger|Gerrit Cole|Riley Greene|Cade Smith|Joe Ryan|Ben Rice|Josh Hader|Hunter Greene|Jeremy Pena|Jazz Chisholm Jr.|Max Fried|Kevin McGonigle|Ivan Herrera|Jacob deGrom|Drake Baldwin|Tyler Soderstrom|Logan Webb|Aroldis Chapman|Andy Pages|Nolan McLean|Wyatt Langford|Hunter Brown|Jarren Duran|Dylan Crews|Shea Langeliers|Drew Rasmussen|Andres Munoz|Alec Burleson|Bo Bichette|Mike Trout|Seiya Suzuki|Xavier Edwards|Austin Riley|Brent Rooker|Konnor Griffin|Jesus Luzardo|Manny Machado|Sonny Gray|George Kirby|Byron Buxton|Eury Perez|Miguel Vargas|Corey Seager|Mookie Betts|Louis Varland|Jackson Merrill|Rafael Devers|Munetaka Murakami|Blake Snell|Bryan Reynolds|Kyle Stowers|Josh Naylor|Cal Raleigh|Devin Williams|Yandy Diaz|Willson Contreras|David Bednar|Framber Valdez|Kyle Bradish|Maikel Garcia|Kyle Harrison|Edwin Diaz|Daylen Lile|Braxton Ashcraft|William Contreras|Parker Messick|Luke Keaschall|Luis Robert Jr.|Trey Yesavage|Nico Hoerner|Bryce Miller|Hunter Goodman|Brandon Nimmo|Travis Bazzana|Gavin Williams|Payton Tolle|Samuel Basallo|Felix Bautista|Geraldo Perdomo|Kade Anderson|Raisel Iglesias|Carson Benge|Jo Adell|Max Meyer|Jac Caglianone|Michael Busch|Kevin Gausman|Randy Arozarena|Tommy Edman|Ranger Suarez|Justin Steele|Jackson Holliday|MacKenzie Gore|Vinnie Pasquantino|Charlie Condon|Cam Smith|Jonathan Aranda|River Ryan|Wilyer Abreu|Otto Lopez|Brandon Marsh|Christian Yelich|Sandy Alcantara|George Springer|Jose Altuve|Tyler Glasnow|Shane McClanahan|Trevor Megill|Sam Antonacci|Alex Bregman|Nathan Eovaldi|Corbin Burnes|Isaac Paredes|Spencer Schwellenbach|Jordan Westburg|Ian Happ|Ceddanne Rafaela|Daniel Palencia|Colson Montgomery|Jared Jones|Alec Bohm|Shota Imanaga|Kazuma Okamoto|Christian Scott|Luis Arraez|Bryce Eldridge|Ryan Sloan|Reid Detmers|Teoscar Hernandez|Logan Henderson|Tanner Bibee|Luis Garcia Jr.|Bryson Stott|Carlos Rodon|Christian Walker|Dansby Swanson|Trevor Story|Jacob Wilson|Robert Suarez|Nick Pivetta|Esmerlyn Valdez|Cole Carrigg|Brandon Lowe|Chase DeLauter|Garrett Mitchell|Ben Brown|Heliot Ramos|Jung Hoo Lee|Ryan Helsley|Joshua Baez|Caleb Durbin|Jasson Dominguez|Gabriel Moreno|Grant Taylor|Josue De Paula|Bubba Chandler|Freddy Peralta|Andrew Vaughn|Jacob Latz|Dillon Dingler|Gage Jump|Daulton Varsho|Kyle Karros|A.J. Ewing|Brendan Donovan|Josh Jung|Taylor Ward|Ryan Waldschmidt|Max Muncy|Cade Cavalli|Willy Adames|Gleyber Torres|Jake Bauers|Casey Schmitt|Taj Bradley|Michael King|Ozzie Albies|Noelvi Marte|Didier Fuentes|Henry Bolte|Xander Bogaerts|Bryan Baker|Chandler Simpson|JJ Bleday|Jose Soriano|Matthew Boyd|Jordan Lawlar|Kaelen Culpepper|Pablo Lopez|Matt McLain|Trent Grisham|Ryan O'Hearn|Troy Melton|Joshua Kuroda-Grauer|Abner Uribe|Justin Wrobleski|Spencer Steer|Addison Barger|Josh Bell|Riley O'Brien|Ryan Weathers|Ernie Clement|Masyn Winn|Ezequiel Tovar|Spencer Strider|Spencer Torkelson|Casey Mize|Leo De Vries|Joey Cantillo|Lawrence Butler|Jackson Jobe|Jesus Sanchez|Royce Lewis|Jakob Marsee|Hector Rodriguez|Nick Martinez|Nolan Schanuel|Colt Keith|Lars Nootbaar|Brandon Woodruff|Steven Kwan|Matt Chapman|Nick Lodolo|Jorge Polanco|Emerson Hancock|Adley Rutschman|Walker Jenkins|TJ Rumfield|Anthony Volpe|Shane Baz|Emilio Pagan|Kerry Carpenter|Brenton Doyle|Jacob Melton|Nathaniel Lowe|Ralphy Velazquez|Will Warren|Matt Shaw|Max Clark|Brett Baty|Randy Rodriguez|Clay Holmes|Dominic Canzone|Braden Montgomery|Sean Burke|Roki Sasaki|Jesus Made|Walbert Urena|Joe Musgrove|Justin Crawford|Owen Caissie|Ryan Pepiot|Triston Casas|Trevor Rogers|Agustin Ramirez|Cooper Pratt|Curtis Mead|Eugenio Suarez|Andres Gimenez|Kodai Senga|Trevor Larnach|Clarke Schmidt|Pedro Ramirez|Dustin May|Paul Sewald|Jake Burger|Giancarlo Stanton|Adrian Morejon|Edward Cabrera|Tatsuya Imai|Cole Young|Adolis Garcia|Cody Ponce|Justin Martinez|Sean Keys|Kevin Alcantara|Evan Carter|Carter Jensen|Kris Bubic|Sal Frelick|Cooper Ingle|Michael Conforto|Jack Leiter|Kody Clemens|Brandon Sproat|Brayan Rocchio|Mickey Moniak|Edwin Arroyo|Shane Bieber|Will Smith|Colt Emerson|Pete Fairbanks|Robbie Ray|George Lombard Jr.|Emmet Sheehan|Thomas White|Jose Caballero|J.P. Crawford|Carmen Mlodzinski|Caleb Bonemer|Franklin Arias|Angel Martinez|Luis Lara|Connor Prielipp|Sean Manaea|Sterlin Thompson|Kenley Jansen|Matt Wallner|Lazaro Montes|Anthony Santander|Ryan Mountcastle|Ian Seymour|Connelly Early|Foster Griffin|Endy Rodriguez|Landen Roupp|CJ Kayfus|Liam Hicks|Tyler O'Neill|Jake McCarthy|Heriberto Hernandez|Kyle Teel|Brooks Lee|Jonah Tong|Marcus Semien|Dylan Beavers|Chase Meidroth|Ramon Laureano|Spencer Miles|Mike Sirota|Salvador Perez|Luke Raley|Ronny Mauricio|Michael Wacha|Mick Abel|Jake Bennett|Jacob Gonzalez|Griffin Jax|Francisco Alvarez|Davis Martin|Evan Phillips|Spencer Horwitz|Aidan Miller|Spencer Jones|Christian Moore|Michael Soroka|Jeff McNeil|Jett Williams|Blaze Alexander|Kyle Manzardo|Tristan Peters|Ryan Jeffers|Noah Cameron|Jorge Soler|James Tibbs III|Zac Veen|Yainer Diaz|Anthony Eyanson|Zack Gelof|Dalton Rushing|Marcelo Mayer|Jameson Taillon|Colton Cowser|Romy Gonzalez|Luis Severino|Jason Adam|Josh Lowe|Angel Genao|Alan Roden|Moises Ballesteros|Jonathan India|Clayton Beeter|Carlos Correa|Kumar Rocker|Ryan McMahon|Ben Joyce|Aaron Ashby|Andrew Fischer|Ronny Henriquez|Nolan Arenado|Cole Ragans|Cam Cauley|Bryan Abreu|Gage Wood|Lourdes Gurriel Jr.|Andrew Painter|Yoendrys Gomez|Shane Drohan|Brady House|Emmanuel Rodriguez|Luis Castillo|Edgardo Henriquez|Braylon Doughty|JR Ritchie|Enrique Bradfield Jr.|Jeff Hoffman|Jack Flaherty|Blaze Jordan";
+const DEPTH = "Ha-Seong Kim|Mark Vientos|Jonah Heim|Tyler Stephenson|Logan O'Hoppe|Austin Wells|Patrick Bailey|Henry Davis|Bo Naylor|Austin Hays|Luis Rengifo|Jake Cronenworth|Thairo Estrada|Willi Castro|Lane Thomas|Starling Marte|Harrison Bader|Nolan Jones|Brendan Rodgers|Michael Toglia|Gavin Sheets|Nick Gonzales|Jose Siri|Jeimer Candelario|Joey Ortiz|Josh Smith|Leody Taveras|Kyle Isbel|Mitch Garver|Carlos Santana|Ty France|Joc Pederson|Victor Caratini|Elias Diaz|Mason Montgomery|Jose Alvarado|Erik Miller|Caleb Kilian|Hogan Harris|Tyler Rogers|Tanner Scott|Lucas Erceg|Carlos Estevez|Camilo Doval|Jordan Romano|Kirby Yates|Alexis Diaz|Orion Kerkering|Seranthony Dominguez|Brad Keller|Matt Strahm|Ryan Pressly|Kyle Finnegan|Robert Garcia|Jose Leclerc|Pierce Johnson|Tommy Kahnle|Gregory Soto|Luke Weaver|Fernando Cruz|Tanner Houck|Hunter Harvey|Garrett Whitlock|Michael Kopech|Ryne Stanek|Phil Maton|Colin Poche|Jalen Beeks|Chad Green|Scott Barlow|Jason Foley|Justin Slaten|Erik Swanson|Taylor Rogers|Shawn Armstrong|Tony Santillan|Sam Hentges|Cionel Perez|Joe Jimenez|Brent Suter|Genesis Cabrera|Ryan Brasier|Dylan Lee|Andrew Kittredge|Hunter Gaddis|Rafael Montero|Tim Mayza|Cole Sulser|Kendall Graveman|Robert Stephenson|Aaron Bummer|Jose Butto|Steven Okert|Tyler Alexander|Edwin Uceta|Lake Bachar|Sean Newcomb|Danny Coulombe|Matt Brash|Gabe Speier|Bailey Falter"; // outside the top 450: minimal value
+RANKED.split("|").forEach((n,i)=>{PLAYER_VALUES[n]=Math.max(0.1,Math.round(40*Math.pow(0.75,i/10)*10)/10);});
+DEPTH.split("|").forEach(n=>{PLAYER_VALUES[n]=0.1;});
+const SP_SET=new Set("Tarik Skubal|Jacob Misiorowski|Cristopher Sanchez|Cam Schlittler|Yoshinobu Yamamoto|Paul Skenes|Logan Gilbert|Garrett Crochet|Bryan Woo|Zack Wheeler|Chase Burns|Shohei Ohtani (SP)|Dylan Cease|Chris Sale|Gerrit Cole|Joe Ryan|Hunter Greene|Max Fried|Jacob deGrom|Logan Webb|Nolan McLean|Hunter Brown|Drew Rasmussen|Jesus Luzardo|Sonny Gray|George Kirby|Eury Perez|Blake Snell|Framber Valdez|Kyle Bradish|Kyle Harrison|Braxton Ashcraft|Parker Messick|Trey Yesavage|Bryce Miller|Gavin Williams|Payton Tolle|Kade Anderson|Max Meyer|Kevin Gausman|Ranger Suarez|Justin Steele|MacKenzie Gore|River Ryan|Sandy Alcantara|Tyler Glasnow|Shane McClanahan|Nathan Eovaldi|Corbin Burnes|Spencer Schwellenbach|Jared Jones|Shota Imanaga|Christian Scott|Ryan Sloan|Reid Detmers|Logan Henderson|Tanner Bibee|Carlos Rodon|Nick Pivetta|Ben Brown|Bubba Chandler|Freddy Peralta|Gage Jump|Cade Cavalli|Taj Bradley|Michael King|Didier Fuentes|Jose Soriano|Matthew Boyd|Pablo Lopez|Troy Melton|Justin Wrobleski|Ryan Weathers|Spencer Strider|Casey Mize|Joey Cantillo|Jackson Jobe|Nick Martinez|Brandon Woodruff|Nick Lodolo|Emerson Hancock|Shane Baz|Will Warren|Clay Holmes|Sean Burke|Roki Sasaki|Walbert Urena|Joe Musgrove|Ryan Pepiot|Trevor Rogers|Kodai Senga|Clarke Schmidt|Dustin May|Edward Cabrera|Tatsuya Imai|Cody Ponce|Kris Bubic|Jack Leiter|Brandon Sproat|Shane Bieber|Robbie Ray|Emmet Sheehan|Thomas White|Carmen Mlodzinski|Connor Prielipp|Sean Manaea|Ian Seymour|Connelly Early|Foster Griffin|Landen Roupp|Jonah Tong|Spencer Miles|Michael Wacha|Mick Abel|Jake Bennett|Griffin Jax|Davis Martin|Michael Soroka|Noah Cameron|Anthony Eyanson|Jameson Taillon|Luis Severino|Kumar Rocker|Cole Ragans|Gage Wood|Andrew Painter|Shane Drohan|Luis Castillo|Braylon Doughty|JR Ritchie|Jack Flaherty".split("|"));
+const RP_SET=new Set("Mason Miller|Jhoan Duran|Cade Smith|Josh Hader|Aroldis Chapman|Andres Munoz|Louis Varland|Devin Williams|David Bednar|Edwin Diaz|Felix Bautista|Raisel Iglesias|Trevor Megill|Daniel Palencia|Robert Suarez|Ryan Helsley|Grant Taylor|Jacob Latz|Bryan Baker|Abner Uribe|Riley O'Brien|Emilio Pagan|Randy Rodriguez|Paul Sewald|Adrian Morejon|Justin Martinez|Pete Fairbanks|Kenley Jansen|Evan Phillips|Jason Adam|Clayton Beeter|Ben Joyce|Aaron Ashby|Ronny Henriquez|Bryan Abreu|Yoendrys Gomez|Edgardo Henriquez|Jeff Hoffman|Mason Montgomery|Jose Alvarado|Erik Miller|Caleb Kilian|Hogan Harris|Tyler Rogers|Tanner Scott|Lucas Erceg|Carlos Estevez|Camilo Doval|Jordan Romano|Kirby Yates|Alexis Diaz|Orion Kerkering|Seranthony Dominguez|Brad Keller|Matt Strahm|Ryan Pressly|Kyle Finnegan|Robert Garcia|Jose Leclerc|Pierce Johnson|Tommy Kahnle|Gregory Soto|Luke Weaver|Fernando Cruz|Tanner Houck|Hunter Harvey|Garrett Whitlock|Michael Kopech|Ryne Stanek|Phil Maton|Colin Poche|Jalen Beeks|Chad Green|Scott Barlow|Jason Foley|Justin Slaten|Erik Swanson|Taylor Rogers|Shawn Armstrong|Tony Santillan|Sam Hentges|Cionel Perez|Joe Jimenez|Brent Suter|Genesis Cabrera|Ryan Brasier|Dylan Lee|Andrew Kittredge|Hunter Gaddis|Rafael Montero|Tim Mayza|Cole Sulser|Kendall Graveman|Robert Stephenson|Aaron Bummer|Jose Butto|Steven Okert|Tyler Alexander|Edwin Uceta|Lake Bachar|Sean Newcomb|Danny Coulombe|Matt Brash|Gabe Speier|Bailey Falter".split("|"));
+const PC=new Set("Ivan Herrera|Drake Baldwin|Shea Langeliers|Cal Raleigh|William Contreras|Hunter Goodman|Samuel Basallo|Gabriel Moreno|Dillon Dingler|Adley Rutschman|Agustin Ramirez|Carter Jensen|Will Smith|Endy Rodriguez|Liam Hicks|Kyle Teel|Salvador Perez|Francisco Alvarez|Ryan Jeffers|Yainer Diaz|Dalton Rushing|Jonah Heim|Tyler Stephenson|Logan O'Hoppe|Austin Wells|Patrick Bailey|Henry Davis|Bo Naylor|Mitch Garver|Victor Caratini|Elias Diaz".split("|")),P1=new Set("Nick Kurtz|Vladimir Guerrero Jr.|Pete Alonso|Bryce Harper|Matt Olson|Freddie Freeman|Ben Rice|Alec Burleson|Rafael Devers|Munetaka Murakami|Josh Naylor|Yandy Diaz|Willson Contreras|Vinnie Pasquantino|Michael Busch|Jonathan Aranda|Bryce Eldridge|Luis Garcia Jr.|Christian Walker|Andrew Vaughn|Jake Bauers|Ryan O'Hearn|Spencer Steer|Josh Bell|Spencer Torkelson|Nolan Schanuel|TJ Rumfield|Nathaniel Lowe|Ralphy Velazquez|Triston Casas|Jake Burger|Sean Keys|Ryan Mountcastle|Spencer Horwitz|James Tibbs III|Kyle Manzardo|Carlos Santana|Ty France".split("|")),P2=new Set("Fernando Tatis Jr.|Brice Turang|Ketel Marte|JJ Wetherholt|Jazz Chisholm Jr.|Xavier Edwards|Luke Keaschall|Nico Hoerner|Travis Bazzana|Tommy Edman|Jackson Holliday|Jose Altuve|Sam Antonacci|Bryson Stott|Luis Arraez|Brandon Lowe|Gleyber Torres|Casey Schmitt|Ozzie Albies|Pedro Ramirez|Cole Young|Kody Clemens|Brett Baty|Marcus Semien|Chase Meidroth|Christian Moore|Jeff McNeil|Blaze Alexander|Zack Gelof|Romy Gonzalez|Jonathan India|Edwin Arroyo|Luis Rengifo|Thairo Estrada|Jake Cronenworth|Nick Gonzales".split("|")),P3=new Set("Junior Caminero|Jose Ramirez|Sal Stewart|Austin Riley|Manny Machado|Miguel Vargas|Maikel Garcia|Alex Bregman|Isaac Paredes|Jordan Westburg|Alec Bohm|Kazuma Okamoto|Caleb Durbin|Kyle Karros|Brendan Donovan|Josh Jung|Max Muncy|Curtis Mead|Eugenio Suarez|Royce Lewis|Colt Keith|Joshua Kuroda-Grauer|Matt Chapman|Caleb Bonemer|Jett Williams|Andrew Fischer|Ryan McMahon|Nolan Arenado|Brady House|Blaze Jordan|Mark Vientos|Jeimer Candelario|Ha-Seong Kim".split("|")),PS=new Set("Bobby Witt Jr.|Elly De La Cruz|Gunnar Henderson|CJ Abrams|Zach Neto|Francisco Lindor|Trea Turner|Jeremy Pena|Kevin McGonigle|Bo Bichette|Konnor Griffin|Corey Seager|Mookie Betts|Geraldo Perdomo|Colson Montgomery|Dansby Swanson|Trevor Story|Jacob Wilson|Otto Lopez|Willy Adames|Xander Bogaerts|Kaelen Culpepper|Matt McLain|Masyn Winn|Ezequiel Tovar|Leo De Vries|Anthony Volpe|Jesus Made|Cooper Pratt|Andres Gimenez|Brayan Rocchio|Colt Emerson|George Lombard Jr.|Jose Caballero|J.P. Crawford|Franklin Arias|Brooks Lee|Ronny Mauricio|Jacob Gonzalez|Aidan Miller|Marcelo Mayer|Angel Genao|Ernie Clement|Carlos Correa|Joey Ortiz".split("|")),PD=new Set("Shohei Ohtani|Kyle Schwarber|Brent Rooker|Christian Yelich|George Springer|Jorge Polanco|Giancarlo Stanton|Moises Ballesteros".split("|"));
+const POS=n=>RP_SET.has(n)?"RP":SP_SET.has(n)?"SP":PC.has(n)?"C":P1.has(n)?"1B":P2.has(n)?"2B":P3.has(n)?"3B":PS.has(n)?"SS":PD.has(n)?"DH":"OF";
+const matchPos=(n,v)=>!v||(v==="H"?!(RP_SET.has(n)||SP_SET.has(n)):POS(n)===v);
+// H2H categories adjustments (R,HR,RBI,TB,AVG,OBP,NSB / K,TBA,ERA,WHIP,K/BB,QS,SVH,NSVH). Edit freely.
+const ADJ={"Aaron Judge": 1.08, "Juan Soto": 1.08, "Shohei Ohtani": 1.08, "Nick Kurtz": 1.08, "Yordan Alvarez": 1.08, "Kyle Schwarber": 1.08, "Bryce Harper": 1.08, "Freddie Freeman": 1.08, "Alex Bregman": 1.08, "Max Muncy": 1.08, "Christian Yelich": 1.08, "Brent Rooker": 1.08, "Vladimir Guerrero Jr.": 1.08, "Cody Bellinger": 1.08, "Bobby Witt Jr.": 1.08, "Brice Turang": 1.08, "Pete Crow-Armstrong": 1.08, "Xavier Edwards": 1.08, "Corbin Carroll": 1.08, "Jackson Chourio": 1.08, "Julio Rodriguez": 1.08, "Ronald Acuna Jr.": 1.08, "Chandler Simpson": 1.08, "Oneil Cruz": 0.92, "Jazz Chisholm Jr.": 0.92, "Jo Adell": 0.92, "Hunter Goodman": 0.92, "Ceddanne Rafaela": 0.92, "Anthony Volpe": 0.92, "Luis Robert Jr.": 0.92, "Elly De La Cruz": 0.92, "Tarik Skubal": 1.1, "Cristopher Sanchez": 1.1, "Logan Gilbert": 1.1, "Paul Skenes": 1.1, "Yoshinobu Yamamoto": 1.1, "Zack Wheeler": 1.1, "Garrett Crochet": 1.1, "George Kirby": 1.1, "Logan Webb": 1.1, "Max Fried": 1.1, "Joe Ryan": 1.1, "Bryan Woo": 1.1, "Chris Sale": 1.1, "Shota Imanaga": 1.1, "Ranger Suarez": 1.1, "Sonny Gray": 1.1, "Kevin Gausman": 1.1, "Gerrit Cole": 1.1, "Framber Valdez": 1.1, "Eury Perez": 0.92, "Hunter Greene": 0.92, "Shane McClanahan": 0.92, "Tyler Glasnow": 0.92, "Spencer Strider": 0.92, "Blake Snell": 0.92, "Shohei Ohtani (SP)": 0.92, "Jacob Misiorowski": 0.92};
+// Positional scarcity: start 1 each of C/1B/2B/3B/SS + 2 IF, 4 OF, 2 UTIL
+const POSADJ={C:1.3,SS:1.1,"2B":1.1,"3B":1.05,"1B":1,OF:1,DH:0.97};
+const OVR={"Bryan Baker":13,"Mason Montgomery":9,"Louis Varland":11};
+// Depth floors (index = order within position group). 28-man rosters + 52 IP/week minimum make bench SP/RP valuable.
+const FLOOR=(i,t)=>{for(const [k,v] of t) if(i<k) return v; return 0.1;};
+const RPF=[[25,4],[45,2.5],[70,1.5],[110,0.8]], SPF=[[30,0],[50,3],[70,2],[90,1.4],[110,1],[131,0.6]];
+(()=>{
+ const rpOrder=RANKED.split("|").filter(n=>RP_SET.has(n)).concat(DEPTH.split("|").filter(n=>RP_SET.has(n)));
+ const spOrder=RANKED.split("|").filter(n=>SP_SET.has(n));
+ rpOrder.forEach((n,i)=>{PLAYER_VALUES[n]=Math.round(PLAYER_VALUES[n]*(i<12?1.6:i<25?1.4:i<40?1.2:1)*10)/10;});
+ Object.entries(ADJ).forEach(([n,m])=>{if(PLAYER_VALUES[n]!==undefined)PLAYER_VALUES[n]=Math.min(40,Math.max(0.1,Math.round(PLAYER_VALUES[n]*m*10)/10));});
+ Object.keys(PLAYER_VALUES).forEach(n=>{if(RP_SET.has(n)||SP_SET.has(n))return;const m=POSADJ[POS(n)]||1;PLAYER_VALUES[n]=Math.min(40,Math.max(0.1,Math.round(PLAYER_VALUES[n]*m*10)/10));});
+ rpOrder.forEach((n,i)=>{PLAYER_VALUES[n]=Math.max(PLAYER_VALUES[n],FLOOR(i,RPF));});
+ spOrder.forEach((n,i)=>{PLAYER_VALUES[n]=Math.max(PLAYER_VALUES[n],FLOOR(i,SPF));});
+ Object.entries(OVR).forEach(([n,v])=>{PLAYER_VALUES[n]=v;});
+})();
+// MLB team (as of July 2026; FA = free agent after the season). Edit freely.
+const TEAMS_RAW={"ARI": "Corbin Carroll|Ketel Marte|Geraldo Perdomo|Gabriel Moreno|Ryan Waldschmidt|Jordan Lawlar|Justin Martinez|Nolan Arenado|Corbin Burnes|Michael Soroka|Lourdes Gurriel Jr.", "ATL": "Ronald Acuna Jr.|Michael Harris II|Matt Olson|Chris Sale|Drake Baldwin|Austin Riley|Spencer Schwellenbach|Robert Suarez|Ozzie Albies|Didier Fuentes|Spencer Strider|JR Ritchie", "BAL": "Gunnar Henderson|Pete Alonso|Jackson Holliday|Kyle Bradish|Felix Bautista|Samuel Basallo|Jordan Westburg|Ryan Helsley|Adley Rutschman|Shane Baz|Tyler O'Neill|Colton Cowser|Dylan Beavers|Blaze Alexander|Ryan Mountcastle|Enrique Bradfield Jr.", "BOS": "Garrett Crochet|Roman Anthony|Jarren Duran|Aroldis Chapman|Willson Contreras|Payton Tolle|Ranger Suarez|Wilyer Abreu|Ceddanne Rafaela|Trevor Story|Caleb Durbin|Triston Casas|Sonny Gray|Connelly Early|Franklin Arias|Jake Bennett|Anthony Eyanson|Marcelo Mayer|Romy Gonzalez", "CHC": "Pete Crow-Armstrong|Nico Hoerner|Michael Busch|Justin Steele|Alex Bregman|Daniel Palencia|Dansby Swanson|Ben Brown|Pedro Ramirez|Edward Cabrera|Matthew Boyd|Matt Shaw|Kevin Alcantara|Moises Ballesteros", "CWS": "Miguel Vargas|Munetaka Murakami|Sam Antonacci|Colson Montgomery|Grant Taylor|Braden Montgomery|Sean Burke|Caleb Bonemer|Kyle Teel|Chase Meidroth|Davis Martin|Tristan Peters", "CIN": "Elly De La Cruz|Sal Stewart|Chase Burns|Hunter Greene|Noelvi Marte|JJ Bleday|Matt McLain|Spencer Steer|Hector Rodriguez|Nick Lodolo|Eugenio Suarez|Emilio Pagan|Edwin Arroyo", "CLE": "Jose Ramirez|Cade Smith|Parker Messick|Gavin Williams|Travis Bazzana|Tanner Bibee|Chase DeLauter|Joey Cantillo|Ralphy Velazquez|Kyle Manzardo|Cooper Ingle|Brayan Rocchio|Angel Martinez|CJ Kayfus|Angel Genao|Braylon Doughty|Steven Kwan", "COL": "Hunter Goodman|Charlie Condon|Cole Carrigg|Kyle Karros|Ezequiel Tovar|TJ Rumfield|Brenton Doyle|Mickey Moniak|Sterlin Thompson|Jake McCarthy|Zac Veen", "DET": "Riley Greene|Kevin McGonigle|Framber Valdez|Dillon Dingler|Troy Melton|Jackson Jobe|Colt Keith|Kerry Carpenter|Max Clark|Spencer Torkelson|Kenley Jansen", "HOU": "Yordan Alvarez|Josh Hader|Jeremy Pena|Hunter Brown|Cam Smith|Jose Altuve|Isaac Paredes|Christian Walker|Tatsuya Imai|Yainer Diaz|Carlos Correa", "KC": "Bobby Witt Jr.|Maikel Garcia|Jac Caglianone|Vinnie Pasquantino|Carter Jensen|Salvador Perez|Michael Wacha|Noah Cameron|Cole Ragans", "LAA": "Zach Neto|Mike Trout|Jo Adell|Reid Detmers|Jose Soriano|Walbert Urena|Nolan Schanuel|Josh Lowe|Christian Moore|Ben Joyce", "LAD": "Shohei Ohtani|Shohei Ohtani (SP)|Kyle Tucker|Yoshinobu Yamamoto|Freddie Freeman|Andy Pages|Mookie Betts|Blake Snell|Edwin Diaz|Tommy Edman|River Ryan|Tyler Glasnow|Teoscar Hernandez|Josue De Paula|Max Muncy|Justin Wrobleski|Roki Sasaki|Will Smith|Emmet Sheehan|Mike Sirota|James Tibbs III|Dalton Rushing|Edgardo Henriquez", "MIA": "Xavier Edwards|Eury Perez|Kyle Stowers|Max Meyer|Otto Lopez|Sandy Alcantara|Jakob Marsee|Owen Caissie|Agustin Ramirez|Thomas White|Liam Hicks|Heriberto Hernandez|Ronny Henriquez", "MIL": "Jacob Misiorowski|Jackson Chourio|Brice Turang|William Contreras|Kyle Harrison|Christian Yelich|Trevor Megill|Logan Henderson|Garrett Mitchell|Andrew Vaughn|Abner Uribe|Jesus Made|Cooper Pratt|Sal Frelick|Luis Lara|Brandon Sproat|Aaron Ashby|Jett Williams|Andrew Fischer|Shane Drohan", "MIN": "Joe Ryan|Luke Keaschall|Taj Bradley|Pablo Lopez|Kaelen Culpepper|Royce Lewis|Walker Jenkins|Trevor Larnach|Kody Clemens|Connor Prielipp|Matt Wallner|Brooks Lee|Mick Abel|Alan Roden|Yoendrys Gomez|Emmanuel Rodriguez|Josh Bell|Byron Buxton", "NYM": "Juan Soto|Francisco Lindor|Devin Williams|Nolan McLean|Bo Bichette|Luis Robert Jr.|Carson Benge|Christian Scott|A.J. Ewing|Jorge Polanco|Brett Baty|Clay Holmes|Kodai Senga|Sean Manaea|Jonah Tong|Marcus Semien|Ronny Mauricio|Francisco Alvarez", "NYY": "Aaron Judge|Cam Schlittler|Cody Bellinger|Gerrit Cole|Ben Rice|Max Fried|Jasson Dominguez|Carlos Rodon|Ryan Weathers|Anthony Volpe|Will Warren|Clarke Schmidt|Giancarlo Stanton|George Lombard Jr.|Jose Caballero|Spencer Jones|Ryan McMahon", "ATH": "Nick Kurtz|Brent Rooker|Tyler Soderstrom|Shea Langeliers|Jacob Wilson|Gage Jump|Henry Bolte|Joshua Kuroda-Grauer|Leo De Vries|Lawrence Butler|Jeff McNeil|Zack Gelof|Luis Severino", "PHI": "Cristopher Sanchez|Kyle Schwarber|Bryce Harper|Trea Turner|Zack Wheeler|Jhoan Duran|Jesus Luzardo|Brandon Marsh|Bryson Stott|Justin Crawford|Aidan Miller|Gage Wood|Andrew Painter", "PIT": "Paul Skenes|Oneil Cruz|Konnor Griffin|Bryan Reynolds|Braxton Ashcraft|Jared Jones|Esmerlyn Valdez|Bubba Chandler|Ryan O'Hearn|Carmen Mlodzinski|Endy Rodriguez|Jacob Gonzalez|Spencer Horwitz", "SD": "Fernando Tatis Jr.|Mason Miller|Manny Machado|Jackson Merrill|Xander Bogaerts|Nick Pivetta|Michael King|Joe Musgrove", "SEA": "Julio Rodriguez|Logan Gilbert|Bryan Woo|Andres Munoz|George Kirby|Josh Naylor|Cal Raleigh|Bryce Miller|Kade Anderson|Ryan Sloan|Brendan Donovan|Emerson Hancock|Dominic Canzone|Cole Young|Colt Emerson|Lazaro Montes|Luke Raley|Luis Castillo", "SF": "Logan Webb|Rafael Devers|Bryce Eldridge|Heliot Ramos|Jung Hoo Lee|Casey Schmitt|Willy Adames|Matt Chapman|Randy Rodriguez|Landen Roupp", "STL": "Jordan Walker|JJ Wetherholt|Ivan Herrera|Alec Burleson|Joshua Baez|Riley O'Brien|Masyn Winn|Lars Nootbaar|Dustin May|Blaze Jordan", "TB": "Junior Caminero|Drew Rasmussen|Yandy Diaz|Shane McClanahan|Jonathan Aranda|Bryan Baker|Chandler Simpson|Nick Martinez|Ryan Pepiot|Jacob Melton|Ian Seymour|Griffin Jax", "TEX": "Jacob deGrom|Wyatt Langford|Corey Seager|Brandon Nimmo|MacKenzie Gore|Nathan Eovaldi|Jacob Latz|Josh Jung|Jake Burger|Evan Carter|Jack Leiter|Cam Cauley|Kumar Rocker", "TOR": "Vladimir Guerrero Jr.|Dylan Cease|Louis Varland|Trey Yesavage|Kazuma Okamoto|Addison Barger|Ernie Clement|Jesus Sanchez|Andres Gimenez|Cody Ponce|Sean Keys|Spencer Miles|Anthony Santander|Jeff Hoffman", "WSH": "James Wood|CJ Abrams|Dylan Crews|Daylen Lile|Cade Cavalli|Curtis Mead|Clayton Beeter|Brady House", "FA": "Tarik Skubal|Jazz Chisholm Jr.|Seiya Suzuki|David Bednar|Raisel Iglesias|Kevin Gausman|Randy Arozarena|George Springer|Ian Happ|Alec Bohm|Shota Imanaga|Luis Arraez|Luis Garcia Jr.|Brandon Lowe|Freddy Peralta|Daulton Varsho|Taylor Ward|Gleyber Torres|Jake Bauers|Trent Grisham|Casey Mize|Brandon Woodruff|Trevor Rogers|Paul Sewald|Adrian Morejon|Adolis Garcia|Kris Bubic|Michael Conforto|Shane Bieber|Pete Fairbanks|Robbie Ray|J.P. Crawford|Foster Griffin|Evan Phillips|Nathaniel Lowe|Ramon Laureano|Ryan Jeffers|Jorge Soler|Jameson Taillon|Jason Adam|Jonathan India|Bryan Abreu|Jack Flaherty"};
+const TEAMOF={};Object.entries(TEAMS_RAW).forEach(([t,x])=>x.split("|").forEach(n=>{TEAMOF[n]=t;}));
+const tagTxt=n=>POS(n)+(TEAMOF[n]?" \u00b7 "+TEAMOF[n]:"");
+const tagHtml=n=>` <span class="tg">${tagTxt(n)}</span>`;
+const PICK_YEAR = 2027, ROUNDS = 28, TEAMS = 10, Q = 0.75; // per-round decay: 40 -> 30 -> 22.5 ...
+const floorQ = Math.pow(Q, ROUNDS - 1);
+// Snake draft + randomized order: slot is unknown at trade time, so each round's pick
+// is valued at its expected (average) value. Curve hits 40 / 30 / 22.5 ... 0 at round 28.
+const pickValue = r => Math.max(0, Math.round(40 * (Math.pow(Q, r - 1) - floorQ) / (1 - floorQ) * 10) / 10);
+const pickLabel = r => `Round ${r}`;
+// Slot model: within a round, value falls by the same per-pick decay; weights are normalized so a round's 10 slots average to pickValue(r).
+const SLOT_RAW = Array.from({length:TEAMS},(_,i)=>Math.pow(Q,i/TEAMS));
+const SLOT_AVG = SLOT_RAW.reduce((s,x)=>s+x,0)/TEAMS;
+const slotWeight = pos => SLOT_RAW[pos-1]/SLOT_AVG;
+// Snake: a team holding slot s picks at position s in odd rounds and TEAMS+1-s in even rounds.
+const picksAt = (t,s) => t.picks.reduce((sum,r)=>sum+pickValue(r)*slotWeight(r%2 ? s : TEAMS+1-s),0);
+const playersVal = t => t.players.reduce((s,p)=>s+PLAYER_VALUES[p],0);
+
+const teams = {A:{players:[],picks:[]},B:{players:[],picks:[]}};
+const $ = id => document.getElementById(id);
+const names = Object.keys(PLAYER_VALUES).sort((x,y)=>PLAYER_VALUES[y]-PLAYER_VALUES[x]);
+
+function total(t){return t.players.reduce((s,p)=>s+PLAYER_VALUES[p],0)+t.picks.reduce((s,r)=>s+pickValue(r),0)}
+
+function build(key){
+  const card = $('card'+key), t = teams[key];
+  card.insertAdjacentHTML('beforeend',
+   `<label>Search players (add as many as you like)</label><select id="f${key}" class="pf" style="margin-bottom:6px"><option value="">All positions</option><option value="H">All hitters</option><option value="C">C</option><option value="1B">1B</option><option value="2B">2B</option><option value="3B">3B</option><option value="SS">SS</option><option value="OF">OF</option><option value="DH">DH/UTIL only</option><option value="SP">Starting pitchers</option><option value="RP">Relievers</option></select><div class="ac"><input id="p${key}" class="search" placeholder="Type a name…" autocomplete="off"><div class="sug" id="s${key}"></div></div>
+    <label>Add ${PICK_YEAR} draft picks (any rounds)</label><select id="k${key}"></select>
+    <ul id="l${key}"></ul><div class="total"><span>Total value</span><span id="t${key}">0</span></div>`);
+  const inp = $('p'+key), box = $('s'+key); let hi = 0, cur = [];
+  const show = () => {
+    const q = inp.value.trim().toLowerCase();
+    const taken = new Set([...teams.A.players, ...teams.B.players]);
+    cur = names.filter(n => (!taken.has(n) || n.includes('(generic)')) && n.toLowerCase().includes(q)&&matchPos(n,$('f'+key).value)).slice(0,10);
+    hi = 0;
+    box.innerHTML = cur.map((n,i)=>`<div data-i="${i}" class="${i===0?'on':''}"><span>${n}${tagHtml(n)}</span><span class="v">${PLAYER_VALUES[n]}</span></div>`).join('') || '<div style="cursor:default">No matches</div>';
+    box.style.display = 'block';
+  };
+  const pick = n => { if(n){ t.players.push(n); render(); } };
+  inp.oninput = show; inp.onfocus = show;
+  inp.onkeydown = e => {
+    const rows = box.querySelectorAll('[data-i]');
+    if(e.key==='ArrowDown' || e.key==='ArrowUp'){ e.preventDefault(); if(!rows.length) return;
+      hi = (hi + (e.key==='ArrowDown'?1:-1) + rows.length) % rows.length;
+      rows.forEach((r,i)=>r.classList.toggle('on', i===hi)); rows[hi].scrollIntoView({block:'nearest'}); }
+    else if(e.key==='Enter'){ e.preventDefault(); pick(cur[hi]); }
+    else if(e.key==='Escape'){ box.style.display='none'; }
+  };
+  box.onmousedown = e => { const d = e.target.closest('[data-i]'); if(d){ e.preventDefault(); pick(cur[+d.dataset.i]); } };
+  inp.onblur = () => setTimeout(() => { box.style.display='none'; }, 120);
+  $('k'+key).onchange = e => { if(e.target.value){t.picks.push(+e.target.value); render();} };
+}
+
+function render(){
+  for(const key of ['A','B']){
+    const t = teams[key], other = teams[key==='A'?'B':'A'];
+    const taken = new Set([...teams.A.players,...teams.B.players]);
+    $('p'+key).value = ''; $('s'+key).style.display = 'none';
+    $('k'+key).innerHTML = '<option value="">Select pick…</option>' +
+      Array.from({length:ROUNDS},(_,i)=>i+1).filter(r=>!t.picks.includes(r))
+       .map(r=>`<option value="${r}">Round ${r} (${pickValue(r)})</option>`).join('');
+    const items = [
+      ...t.players.map((n,i)=>`<li><span>${n}${tagHtml(n)}</span><span class="v">${PLAYER_VALUES[n]}</span><button data-k="${key}" data-t="p" data-i="${i}" aria-label="Remove">×</button></li>`),
+      ...t.picks.map((r,i)=>`<li>${PICK_YEAR} ${pickLabel(r)} pick<span class="v">${pickValue(r)}</span><button data-k="${key}" data-t="k" data-i="${i}" aria-label="Remove">×</button></li>`)];
+    $('l'+key).innerHTML = items.join('') || '<div class="empty">Nothing added yet</div>';
+    $('t'+key).textContent = total(t).toFixed(1);
+  }
+  document.querySelectorAll('li button').forEach(b=>b.onclick=()=>{
+    const t=teams[b.dataset.k]; (b.dataset.t==='p'?t.players:t.picks).splice(+b.dataset.i,1); render();
+  });
+  $('go').disabled = !(total(teams.A)>0 && total(teams.B)>0);
+  $('result').style.display='none';
+}
+
+$('go').onclick = () => {
+  const a = total(teams.A), b = total(teams.B), diff = Math.abs(a-b), pct = diff/Math.max(a,b);
+  let cls, text;
+  if(diff<=3 || pct<=0.08){cls='var(--ok)';text='✅ Fair trade'}
+  else if(pct<=0.2){cls='var(--warn)';text='⚠️ Slightly lopsided'}
+  else {cls='var(--bad)';text='❌ Lopsided trade'}
+  const winner = a===b ? '' : (a>b ? 'Team B' : 'Team A'); // team receiving more value
+  const v=$('verdict'); v.textContent=text; v.style.color=cls;
+  $('detail').innerHTML = `Team A sends <b>${a.toFixed(1)}</b> pts · Team B sends <b>${b.toFixed(1)}</b> pts.<br>` +
+    (winner ? `<b>${winner}</b> comes out ahead by <b>${diff.toFixed(1)}</b> pts (${(pct*100).toFixed(0)}%).` : 'Perfectly even.');
+  if(teams.A.picks.length+teams.B.picks.length>0){
+    const pa=playersVal(teams.A), pb=playersVal(teams.B);
+    let aUp=0, fairN=0, bUp=0, nSc=0, lo=Infinity, hi=-Infinity;
+    for(let s=1;s<=TEAMS;s++) for(let u=1;u<=TEAMS;u++){
+      if(s===u) continue; // two different teams can never hold the same draft slot
+      nSc++;
+      const x=pa+picksAt(teams.A,s), y=pb+picksAt(teams.B,u), d=y-x; // d>0: Team A receives more
+      if(Math.abs(d)<=3 || Math.abs(d)/Math.max(x,y)<=0.08) fairN++; else if(d>0) aUp++; else bUp++;
+      lo=Math.min(lo,d); hi=Math.max(hi,d);
+    }
+    const sg = n => (n>=0?'+':'−')+Math.abs(n).toFixed(1);
+    $('scen').innerHTML = `<p style="margin:12px 0 0"><b>Draft-order scenarios</b> (all ${nSc} possible slot combinations, snake order)<br>` +
+      `Team A ahead <b>${Math.round(aUp/nSc*100)}%</b> · Fair <b>${Math.round(fairN/nSc*100)}%</b> · Team B ahead <b>${Math.round(bUp/nSc*100)}%</b><br>` +
+      `<span style="color:var(--muted)">Team A's net gain ranges from ${sg(lo)} to ${sg(hi)} pts depending on where each team's draft slot lands.</span></p>`;
+  } else $('scen').innerHTML='';
+  $('barA').style.width = (a/(a+b)*100)+'%'; $('barB').style.width = (b/(a+b)*100)+'%';
+  $('result').style.display='block'; $('result').scrollIntoView({behavior:'smooth',block:'nearest'});
+};
+
+$('ca').onclick = () => {
+  const n = $('cn').value.trim(), v = parseFloat($('cv').value);
+  if(!n || isNaN(v) || v<0 || v>40){ $('cm').textContent = 'Enter a name and a value from 0 to 40.'; return; }
+  PLAYER_VALUES[n] = v; if(!names.includes(n)) names.push(n);
+  names.sort((x,y)=>PLAYER_VALUES[y]-PLAYER_VALUES[x]);
+  $('cm').textContent = `Added ${n} (${v}). It now appears in both player dropdowns.`;
+  $('cn').value = ''; $('cv').value = ''; render();
+};
+build('A'); build('B'); render();
+</script>
+</body>
+</html>
