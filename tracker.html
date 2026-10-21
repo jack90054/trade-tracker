@@ -59,6 +59,12 @@ summary{cursor:pointer}
 .vbtn:disabled{opacity:.7;cursor:default}
 .ro .edit{display:none!important}
 .tg{color:var(--muted);font-weight:400;font-size:12px}
+.vbtn b{font-size:22px;line-height:1;min-width:1.2em;text-align:right}
+.vbtn.lead b{color:var(--ok)}
+.vbtn.mine b,.vbtn.mine.lead b{color:#fff}
+.vcount{font-size:13px;font-weight:700;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:1px 9px;white-space:nowrap}
+.voted{font-size:12px;font-weight:600;color:var(--ok);border:1px solid var(--ok);border-radius:99px;padding:1px 8px;white-space:nowrap}
+.needs{font-size:12px;font-weight:600;color:var(--b);border:1px solid var(--b);border-radius:99px;padding:1px 8px;white-space:nowrap}
 .noadm .adm{display:none!important}
 .top{flex-basis:100%;font-size:13px;color:var(--muted);padding-left:16px}.top b{color:var(--text);font-weight:600}
 </style>
@@ -214,7 +220,16 @@ const items=(g,sender)=>[...g.players.map(n=>`<div class="it"><span>${esc(n)}${t
 const okVoter=(x,t)=>x.t!==undefined&&x.t!==''&&x.t!==null&&+x.t!==t.a&&+x.t!==t.b;
 const tally=t=>{const c={fair:0,A:0,B:0};ALLV.forEach(x=>{if(!okVoter(x,t))return;const v=x.m[t.id];if(c[v]!==undefined)c[v]++;});return c;};
 const nVotes=t=>{const c=tally(t);return c.fair+c.A+c.B;};
-const voteChip=t=>DB?`<span class="muted">\ud83d\uddf3 ${nVotes(t)}</span>`:'';
+const voteChip=t=>{
+  if(!DB) return '';
+  let h=`<span class="vcount">\ud83d\uddf3 ${nVotes(t)}</span>`;
+  const mine=MYT!==''&&(+MYT===t.a||+MYT===t.b);
+  if(UID&&MYT!==''&&!mine){
+    if(MY[t.id]) h+=` <span class="voted">\u2713 You voted</span>`;
+    else if(t.status==='Pending') h+=` <span class="needs">\u25cf Needs your vote</span>`;
+  }
+  return h;
+};
 const voters=(t,k)=>ALLV.filter(x=>okVoter(x,t)&&x.m[t.id]===k).map(x=>tname(+x.t)).join(', ');
 const upsertMe=()=>{
   const t=MYT===''?'':+MYT, me=ALLV.find(x=>x.id===UID);
@@ -225,10 +240,10 @@ const voteBox=t=>{
   if(!DB) return '';
   const c=tally(t), my=MY[t.id], n=nVotes(t), pend=t.status==='Pending';
   const mine=MYT!==''&&(+MYT===t.a||+MYT===t.b), live=pend&&UID&&MYT!==''&&!mine;
-  const o=[['A','Lopsided for '+tname(t.a)],['fair','Fair trade'],['B','Lopsided for '+tname(t.b)]];
+  const o=[['A',tname(t.a)+' 賺'],['fair','Fair trade'],['B',tname(t.b)+' 賺']];
   const hint=!pend?'':!UID?'Sign in with your team PIN (top of the page) to vote.':MYT===''?'Pick your team under Trades ("You are\u2026") to vote.':mine?"Your team is in this trade, so you can't vote on it.":'';
   return `<div class="vote"><div class="hd">\ud83d\uddf3 League vote${pend?'':' (closed)'} \u00b7 ${n} vote${n===1?'':'s'}</div>
-   <div class="row" style="align-items:flex-start">${o.map(([k,l])=>`<div><button class="vbtn${my===k&&live?' mine':''}" style="width:100%" data-v="${t.id}|${k}"${live?'':' disabled'}><span>${l}</span><b>${c[k]}</b></button><div class="fine" style="margin-top:4px">${voters(t,k)}</div></div>`).join('')}</div>
+   <div class="row" style="align-items:flex-start">${o.map(([k,l])=>`<div><button class="vbtn${my===k&&live?' mine':''}${c[k]>0&&c[k]===Math.max(c.A,c.B,c.fair)?' lead':''}" style="width:100%" data-v="${t.id}|${k}"${live?'':' disabled'}><span>${l}</span><b>${c[k]}</b></button><div class="fine" style="margin-top:4px">${voters(t,k)}</div></div>`).join('')}</div>
    ${hint?`<div class="fine" style="margin-top:6px">${hint}</div>`:''}</div>`;
 };
 const topOf=g=>{const n=g.players.slice().sort((a,b)=>(PLAYER_VALUES[b]||0)-(PLAYER_VALUES[a]||0))[0];return n?esc(n)+tagHtml(n):(g.picks.length?'picks only':'\u2014');};
