@@ -63,8 +63,18 @@ summary{cursor:pointer}
 .vbtn.lead b{color:var(--ok)}
 .vbtn.mine b,.vbtn.mine.lead b{color:#fff}
 .vcount{font-size:13px;font-weight:700;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:1px 9px;white-space:nowrap}
+.lopbar{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin-top:12px;font-size:12px;color:var(--muted)}
+.loptrack{position:relative;display:flex;height:14px;border-radius:7px;background:var(--line)}
+.loptrack>div:first-child{border-radius:7px 0 0 7px}
+.loptrack>div:nth-child(2){border-radius:0 7px 7px 0}
+.loptrack div{transition:width .3s}
+.lopmid{position:absolute;left:50%;top:0;bottom:0;width:1.5px;margin-left:-0.75px;background:var(--text);opacity:.6}
+.lopslight{position:absolute;top:-5px;bottom:-5px;box-sizing:border-box;background:rgba(34,197,94,.35)}
+.lopcap{font-size:12px;color:var(--muted);margin-top:4px}
 .voted{font-size:12px;font-weight:600;color:var(--ok);border:1px solid var(--ok);border-radius:99px;padding:1px 8px;white-space:nowrap}
 .needs{font-size:12px;font-weight:600;color:var(--b);border:1px solid var(--b);border-radius:99px;padding:1px 8px;white-space:nowrap}
+.yours{font-size:12px;font-weight:600;color:#7c3aed;border:1px solid #7c3aed;border-radius:99px;padding:1px 8px;white-space:nowrap}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .yours{color:#b794f6;border-color:#b794f6}}
 .noadm .adm{display:none!important}
 .top{flex-basis:100%;font-size:13px;color:var(--muted);padding-left:16px}.top b{color:var(--text);font-weight:600}
 </style>
@@ -217,6 +227,9 @@ function renderSides(){
 const OPEN=new Set();
 const items=(g,sender)=>[...g.players.map(n=>`<div class="it"><span>${esc(n)}${tagHtml(n)}</span></div>`),
  ...g.picks.map(p=>typeof p==='number'?{o:sender,r:p}:p).sort((x,y)=>x.r-y.r).map(p=>`<div class="it"><span><span class="chip">R${p.r}</span> ${PICK_YEAR} pick${p.o!==sender?` <span class="muted">(${tname(p.o)})</span>`:''}</span></div>`)].join('')||'<div class="muted">\u2014</div>';
+const sumN=g=>g.players.reduce((s,n)=>s+(PLAYER_VALUES[n]||0),0)+g.picks.reduce((s,p)=>s+pickValue(typeof p==='number'?p:p.r),0);
+const bar=t=>{const a=sumN(t.bGives),b=sumN(t.aGives),tot=a+b,pa=tot?a/tot*100:50,F=0.10,zl=(1-F)/(2-F)*100,zw=100-2*zl; // fair zone: the two sides are within 10% of each other
+  return `<div class="lopbar"><span style="color:var(--a);font-weight:600">${tname(t.a)}</span><div class="loptrack"><div style="width:${pa}%;background:var(--a)"></div><div style="width:${100-pa}%;background:var(--b)"></div><span class="lopslight" style="left:${zl}%;width:${zw}%"></span><span class="lopmid"></span></div><span style="color:var(--b);font-weight:600">${tname(t.b)}</span></div><div class="lopcap">Bar shows the value each team receives; the longer side comes out ahead. The green zone marks a fair trade (the two sides are within 10% of each other). The thin line marks the exact middle.</div>`;};
 const okVoter=(x,t)=>x.t!==undefined&&x.t!==''&&x.t!==null&&+x.t!==t.a&&+x.t!==t.b;
 const tally=t=>{const c={fair:0,A:0,B:0};ALLV.forEach(x=>{if(!okVoter(x,t))return;const v=x.m[t.id];if(c[v]!==undefined)c[v]++;});return c;};
 const nVotes=t=>{const c=tally(t);return c.fair+c.A+c.B;};
@@ -224,8 +237,9 @@ const voteChip=t=>{
   if(!DB) return '';
   let h=`<span class="vcount">\ud83d\uddf3 ${nVotes(t)}</span>`;
   const mine=MYT!==''&&(+MYT===t.a||+MYT===t.b);
-  if(UID&&MYT!==''&&!mine){
-    if(MY[t.id]) h+=` <span class="voted">\u2713 You voted</span>`;
+  if(UID&&MYT!==''){
+    if(mine) h+=` <span class="yours">\u2605 Your trade</span>`;
+    else if(MY[t.id]) h+=` <span class="voted">\u2713 You voted</span>`;
     else if(t.status==='Pending') h+=` <span class="needs">\u25cf Needs your vote</span>`;
   }
   return h;
@@ -265,7 +279,7 @@ const tradeCard=t=>{
    <div class="body"><div class="two">
     <div><div class="hd">${tname(t.a)} gets</div>${items(t.bGives,t.b)}</div>
     <div><div class="hd">${tname(t.b)} gets</div>${items(t.aGives,t.a)}</div></div>
-   ${voteBox(t)}<div class="muted" style="margin-top:8px">${esc(t.date)}${t.note?` \u00b7 \ud83d\udcdd ${esc(t.note)}`:''}</div>
+   ${voteBox(t)}${bar(t)}<div class="muted" style="margin-top:8px">${esc(t.date)}${t.note?` \u00b7 \ud83d\udcdd ${esc(t.note)}`:''}</div>
    ${ctrl(t)}</div></details>`;
 };
 function renderTracker(){
