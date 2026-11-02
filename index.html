@@ -76,7 +76,7 @@ textarea{width:100%;min-height:80px;margin-top:8px;border:1px solid var(--line);
   <div id="detail"></div><div id="scen"></div>
   <div class="bar"><div id="barA" style="background:var(--a)"></div><div id="barB" style="background:var(--b)"></div></div>
 </section>
-<p class="fine">Fair = within ~8% of the larger side (or ≤3 pts). Snake draft with randomized order: your slot is unknown (1.01 pairs with 2.10, etc.), so each round's pick is valued at its average. Curve: R1=40, R2=30, R3≈22.5, falling to 0 at R28. The scenario breakdown re-runs the trade across all 90 possible draft-slot combinations (two teams can't share a slot; a team's early and late picks move in opposite directions in a snake).</p>
+<p class="fine">Fair = within ~8% of the larger side (or ≤3 pts). Snake draft with randomized order: your slot is unknown (1.01 pairs with 2.10, etc.), so each round's pick is valued at its average. Rounds 1 and 2 can't be traded. The pick curve starts at R3 = 22.5 and eases down gradually, reaching 0 around R22. Players are valued on the same curve by overall rank (rank 21 is worth about a Round 3 pick). The scenario breakdown re-runs the trade across all 90 possible draft-slot combinations (two teams can't share a slot; a team's early and late picks move in opposite directions in a snake).</p>
 </main>
 <script src="players.js"></script>
 <script>
@@ -85,7 +85,7 @@ const PICK_YEAR = 2027, ROUNDS = 28, TEAMS = 10, Q = 0.75; // per-round decay: 4
 const floorQ = Math.pow(Q, ROUNDS - 1);
 // Snake draft + randomized order: slot is unknown at trade time, so each round's pick
 // is valued at its expected (average) value. Curve hits 40 / 30 / 22.5 ... 0 at round 28.
-const pickValue = r => Math.max(0, Math.round(40 * (Math.pow(Q, r - 1) - floorQ) / (1 - floorQ) * 10) / 10);
+const pickValue = r => Math.round(valueAt(r)*10)/10;
 const pickLabel = r => `Round ${r}`;
 // Slot model: within a round, value falls by the same per-pick decay; weights are normalized so a round's 10 slots average to pickValue(r).
 const SLOT_RAW = Array.from({length:TEAMS},(_,i)=>Math.pow(Q,i/TEAMS));
@@ -137,7 +137,7 @@ function render(){
     const taken = new Set([...teams.A.players,...teams.B.players]);
     $('p'+key).value = ''; $('s'+key).style.display = 'none';
     $('k'+key).innerHTML = '<option value="">Select pick…</option>' +
-      Array.from({length:ROUNDS},(_,i)=>i+1).filter(r=>!t.picks.includes(r))
+      Array.from({length:ROUNDS-PICK_MIN_ROUND+1},(_,i)=>i+PICK_MIN_ROUND).filter(r=>!t.picks.includes(r))
        .map(r=>`<option value="${r}">Round ${r} (${pickValue(r)})</option>`).join('');
     const items = [
       ...t.players.map((n,i)=>`<li><span>${n}${tagHtml(n)}</span><span class="v">${PLAYER_VALUES[n]}</span><button data-k="${key}" data-t="p" data-i="${i}" aria-label="Remove">×</button></li>`),
