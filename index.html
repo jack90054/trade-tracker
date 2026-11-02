@@ -59,7 +59,7 @@ textarea{width:100%;min-height:80px;margin-top:8px;border:1px solid var(--line);
 <body>
 <main>
 <h1>⚾ Redraft Trade Calculator</h1>
-<p class="sub"><a href="tracker.html" >📒 Open the League Trade Tracker</a><br>Player values based on Baseball America's 2027 redraft ranking (Oct 2026), adjusted for H2H categories (relievers/holds boosted, positional scarcity, bench depth) + 2027 draft picks (10-team snake draft, 28 rounds). Draft order is random, so each round is valued at its expected slot. Values are editable in the script. Add as many players and picks to each side as you want; use × to remove any.</p>
+<p class="sub"><a href="https://claude.ai/artifact/HttUXxB5XU4iTxdDvxtGK5" target="_blank" rel="noopener">📒 Open the League Trade Tracker</a><br>Player values based on a 2027 overall ranking (NBC Sports, July 2026), adjusted for H2H categories (relievers/holds boosted, positional scarcity, bench depth) + 2027 draft picks (10-team snake draft, 28 rounds). Draft order is random, so each round is valued at its expected slot. Values are editable in the script. Add as many players and picks to each side as you want; use × to remove any.</p>
 <div class="grid">
   <section class="card" id="cardA"><h2>Team A gives</h2></section>
   <section class="card" id="cardB"><h2>Team B gives</h2></section>
@@ -188,7 +188,7 @@ $('go').onclick = () => {
 
 $('ca').onclick = () => {
   const n = $('cn').value.trim(), v = parseFloat($('cv').value);
-  if(!n || isNaN(v) || v<0 || v>40){ $('cm').textContent = 'Enter a name and a value from 0 to 40.'; return; }
+  if(!n || isNaN(v) || v<0 || v>45){ $('cm').textContent = 'Enter a name and a value from 0 to 45.'; return; }
   PLAYER_VALUES[n] = v; if(!names.includes(n)) names.push(n);
   names.sort((x,y)=>PLAYER_VALUES[y]-PLAYER_VALUES[x]);
   $('cm').textContent = `Added ${n} (${v}). It now appears in both player dropdowns.`;

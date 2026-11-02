@@ -101,7 +101,7 @@ summary{cursor:pointer}
 </section>
 
 <details class="card edit"><summary>➕ Add a player that isn't on the list</summary>
-  <div class="row"><input id="cn" class="search" placeholder="Player name" style="flex:2"><input id="cv" class="search" type="number" min="0" max="40" step="0.5" placeholder="Value 0–40"><button id="ca" class="btn">Add</button></div>
+  <div class="row"><input id="cn" class="search" placeholder="Player name" style="flex:2"><input id="cv" class="search" type="number" min="0" max="45" step="0.5" placeholder="Value 0–45"><button id="ca" class="btn">Add</button></div>
   <div id="cm" class="fine" style="margin-top:6px"></div></details>
 
 <section class="card"><b>Trades</b>
@@ -313,7 +313,7 @@ $('ls').onclick=async()=>{
 };
 $('ca').onclick=()=>{
   const n=$('cn').value.trim(), v=parseFloat($('cv').value);
-  if(!n||isNaN(v)||v<0||v>40){$('cm').textContent='Enter a name and a value from 0 to 40.';return;}
+  if(!n||isNaN(v)||v<0||v>45){$('cm').textContent='Enter a name and a value from 0 to 45.';return;}
   PLAYER_VALUES[n]=v; TR.custom[n]=v; if(!names.includes(n))names.push(n); sortNames(); persist();
   $('cm').textContent=`Added ${n} (${v}). It's now searchable above.`; $('cn').value='';$('cv').value='';
 };
